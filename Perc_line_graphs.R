@@ -1,4 +1,4 @@
-#Run all of Data_cleanig first
+#Run all of Data_cleaning first
 #LINE CHARTS, PERCENTAGES
 
 ##---------AHRQ DATA------------------#
