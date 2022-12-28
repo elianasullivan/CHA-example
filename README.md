@@ -9,4 +9,4 @@ All code is written in R. This is a sample of the code I wrote for this project,
 - The **sample graphics** folder includes a small sample of the graphs and figures produced for this project.
 
 # Author
-This code was written by me, Eliana Sullivan in 2022. I am the only person currently working directly with this code.
+This code was written by me, Eliana Sullivan, in 2022. I am the only person currently working directly with this code.
