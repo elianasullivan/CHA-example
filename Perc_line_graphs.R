@@ -1,5 +1,9 @@
-#Run all of Data_cleaning first
-#LINE CHARTS, PERCENTAGES
+#LINE GRAPHS, PERCENTAGES
+
+# Run all of Data_cleaning first
+# Next run the block of interest under either AHRQ or CHR data
+# Scroll to the bottom of the page and run the data processing and graphing functions for the indicated data source
+# Graphs auto-save, to view them directly in R comment out the ggsave line at the bottom of the graphing function located in Data_cleaning
 
 ##---------AHRQ DATA------------------#
 
@@ -120,14 +124,13 @@ g_title <- "Adults Who Drink Alcohol Excessively"
 g_subtitle <- "Percentage of adults that report excessive drinking."
 section <- section_behaviors
 
-
-# ----- AHRQ ---- #
-
+# ---- DATA PROCESSING AND GRAPHING ----#
 #Run for both AHRQ and CHR to set y-axis label
-#Alternatively, set y-axis label (yaxis) for a specific graph and don't run this if needed
+#Alternatively, set y-axis label (yaxis) for a specific graph and then don't run this if needed
 yaxis <- paste("%",g_title)
 
-#RUN FOR EVERYTHING - AHRQ
+
+# ----- AHRQ - RUN FOR EVERYTHING ---- #
 county_ahrq <-county_perc_acrossyears(cols)
 oregon_ahrq <- state_perc_acrossyears(cols, !!population)
 combo_ahrq <- quality_transform_combo_acrossyears(county_ahrq,oregon_ahrq)
@@ -135,10 +138,7 @@ combo_ahrq <- quality_transform_combo_acrossyears(county_ahrq,oregon_ahrq)
 graph_county_perc_acrossyears(county_ahrq,g_title,g_subtitle,ahrq_caption, ahrq_years, yaxis, section)
 graph_combo_perc_acrossyears(combo_ahrq,g_title,g_subtitle,ahrq_caption, ahrq_years, yaxis, section)
 
-#--- CHR ----#
-
-#RUN FOR EVERYTHING - CHR
-yaxis <- paste("%",g_title)
+#--- CHR - RUN FOR EVERYTHING ----#
 county_chr <-chr_perc_acrossyears(chr_county, cols)
 oregon_chr <- chr_perc_acrossyears(chr_oregon, cols)
 
