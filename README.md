@@ -1,16 +1,14 @@
 # Community Health Assessment (CHA)
-This includes code to create graphs and other visualizations for Oregon Community Health Assessments (CHA) along with the graphics produced for Coos and Curry's CHAs. The code can be run for any of Oregon's 36 counties and includes data that spans 2016-2022.
+This code is for a Community Health Assessment which is an overview of demographics and social determinants of health for counties in Oregon. The code can be run for any of Oregon's 36 counties and includes data that spans 2016-2022. This portion of the project involves exploring and visualizing publically available data that lends insight into the health of each county.
 
-# Creating Graphs
-First, set the desired county at the bottom of the data_cleaning document. Then, run the whole data_cleaning document which contains all of the libraries, data import, cleaning, functions, and pre-set variables for the rest of the code.
+# What is included
+All code is written in R. This is a sample of the code I wrote for this project, but still displays most of the techniques / styles that I used. 
+- The data_cleaning script contains all of the libraries, data import, cleaning, functions, and pre-set variables for the rest of the code. This should be run first before any of the graphing scripts.
+- The Perc_line_graphs script produces all of the line graphs (over time) for data with percentage values. This is just one of multiple, as I have seperate scripts for other graph and data types as each required slightly different processing and this was the most intuitive way for me to organize it. The script includes additional information about how to use it.
+- The data_files folder has the data imported in this code.
+- The sample graphics folder includes a few of the graphs / figures produced for this project.
 
-The graphing code files are named based on the kind of values they use and the type of graph produced (key: val - values, perc - percentages, bar - bar graphs, line - line graphs) or the data source (e.g., OHA chronic conditions). Within each graphing document there are numerous blocks by category. Simply run a whole block, and then run the specified data processing and graphing functions (usually seperated by data source) at the bottom of the page to produce the graphs. The graphs automatically save, so if you want to see them in R, comment out the ggsave function in the relevant graphing funciton. The map data saves csvs into the map_data folder to be mapped in ArcGIS Online. The function_documentation file has additional information about some functions.
-
-# Data
-All of the data used in the code are stored in the data_files folder.
-
-# Viewing Graphs
-All of the graphics, created in R and otherwise for this project for Coos and Curry counties, are in the graphs folder. They are seperated by county and category for ease.
+I am the only person who wrote and is currently running this code. 
 
 # Author
-This code was written by me, Eliana Sullivan. Reach out to eliana.sullivan23@gmail.com with any questions.
+This code was written by me, Eliana Sullivan in 2022.
