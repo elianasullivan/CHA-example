@@ -1,5 +1,4 @@
-#Run this whole document first
-#To change county only run last few lines
+#Run this whole document before running any of the graphing scripts
 
 ###INSTALL PACKAGES AND LIBRARIES#####
 # install.packages("readxl")
@@ -28,7 +27,7 @@ library(ggrepel)
 #######IMPORT DATA######
 
 #AHRQ DATA
-#Data downloaded directly from https://www.ahrq.gov/sdoh/data-analytics/sdoh-data.html
+#Data downloaded directly from https://www.ahrq.gov/sdoh/data-analytics/sdoh-data.html and used 2016-2020 data files
 ahrq_sdoh_2020 <- read_excel("./data_files/AHRQ_SDOH/ARHQ_SDOH_2020_county.xlsx")
 ahrq_sdoh_2019 <- read_excel("./data_files/AHRQ_SDOH/ARHQ_SDOH_2019_county.xlsx")
 ahrq_sdoh_2018 <- read_excel("./data_files/AHRQ_SDOH/ARHQ_SDOH_2018_county.xlsx")
@@ -36,7 +35,7 @@ ahrq_sdoh_2017 <- read_excel("./data_files/AHRQ_SDOH/ARHQ_SDOH_2017_county.xlsx"
 ahrq_sdoh_2016 <- read_excel("./data_files/AHRQ_SDOH/ARHQ_SDOH_2016_county.xlsx")
 
 #COUNTY HEALTH RANKINGS DATA
-#Data downloaded directly from https://www.countyhealthrankings.org/explore-health-rankings/oregon/data-and-resources and used the "Ranked Measure Data" sheet
+#Data downloaded directly from https://www.countyhealthrankings.org/explore-health-rankings/oregon/data-and-resources and used the "Ranked Measure Data" sheet for 2016-2022
 chr_2022 <- read_excel("./data_files/County_Health_Rankings/Measure_Data_2022_County_Health_Rankings.xlsx")
 chr_2021 <- read_excel("./data_files/County_Health_Rankings/Measure_Data_2021_County_Health_Rankings.xlsx")
 chr_2020 <- read_excel("./data_files/County_Health_Rankings/Measure_Data_2020_County_Health_Rankings.xlsx")
@@ -46,42 +45,24 @@ chr_2017 <- read_excel("./data_files/County_Health_Rankings/Measure_Data_2017_Co
 chr_2016 <- read_excel("./data_files/County_Health_Rankings/Measure_Data_2016_County_Health_Rankings.xlsx")
 
 #OHA CHRONIC CONDITIONS DATA
-#Data downloaded directly from https://www.oregon.gov/oha/PH/DISEASESCONDITIONS/CHRONICDISEASE/DATAREPORTS/Pages/Adult-Prevalence.aspx (then click "Adult Chronic Conditions")
+#Data downloaded directly from https://www.oregon.gov/oha/PH/DISEASESCONDITIONS/CHRONICDISEASE/DATAREPORTS/Pages/Adult-Prevalence.aspx (click "Adult Chronic Conditions")
 oha_chronic <- read_excel("./data_files/OHA/OHA_chronic_conditions_BRFSS_county.xlsx")
 
 
 ######NON-GRAPH FUNCTIONS######
-#function to combine dfs on matching column names (exclude any not included in both)
-#only function that I didn't write
-rbind.match.columns <- function(input1, input2) {
-  n.input1 <- ncol(input1)
-  n.input2 <- ncol(input2)
-  
-  if (n.input2 < n.input1) {
-    TF.names <- which(names(input2) %in% names(input1))
-    column.names <- names(input2[, TF.names])
-  } else {
-    TF.names <- which(names(input1) %in% names(input2))
-    column.names <- names(input1[, TF.names])
-  }
-  
-  return(rbind(input1[, column.names], input2[, column.names]))
-  
-}
-
-#Combining CHR datasets and selecting relelvant variables
+#Combines CHR annual datasets and selects relelvant variables
 CHR_clean <- function(df, year){
   colnames(df) <- gsub("#","Number",colnames(df))
   colnames(df) <- gsub("%","Percent",colnames(df))
   df$County[1] <- "Oregon"
   df %>%
-    select(-contains(c("95","Z-Score","Unreliable","Medicare"))) %>% #the - selects all columnst that don't start with these.
+    select(-contains(c("95","Z-Score","Unreliable","Medicare"))) %>% #the - selects all columns that don't start with these.
     select(-contains(c("Black","White","Hispanic","Asian","AIAN"))) %>%
-    mutate("Year" = as.numeric(year), .after = FIPS) %>% #as.numeric(year) -> so that the year is stored as a number (vs char) and works with the continuous ggplot calls
+    mutate("Year" = as.numeric(year), .after = FIPS) %>% #as.numeric(year) so that the year is stored as a number (vs char) and works with the continuous ggplot calls
     rename_with(make.names)
 }
 
-#Rename column names to be consistent between the older (2016-2019) and newer datasets (2020-2022)
+#Rename CHR columns to be consistent between the older (2016-2019) and newer datasets (2020-2022)
 #Defaulted to newer names because they're more intuitive
 CHR_change_names <- function(df) {
   df %>%
@@ -102,35 +83,40 @@ CHR_change_names <- function(df) {
     )
 }
 
-#Function to calculate the total pop growth rate for an ahrq data frame
+#Function to calculate the total population growth rate for data from AHRQ dataset
 growth_rate <- function(df){
   df %>%
-    arrange(YEAR) %>% #I don't think I need this anymore
-    mutate(growth_rate = 100*(ACS_TOT_POP_WT - lag(ACS_TOT_POP_WT))/lag(ACS_TOT_POP_WT))
+    arrange(YEAR) %>%
+    mutate(growth_rate = 100*(ACS_TOT_POP_WT - lag(ACS_TOT_POP_WT))/lag(ACS_TOT_POP_WT)) #lag takes the entry before to calaculate change since prior year
 }
 
-#Function to get the percentages on a state (instead of county) level
+#Function to get the percentages on a state level with AHRQ dataset
 state_perc_totals <- function(cols_needed, pop_column){
   ahrq_sdoh_full %>%
     filter(YEAR==2020) %>%
-    #first multiply the percentages by the total population and sum accross counties to get total people in state
-    summarise(total_pop = sum({{pop_column}}), across(c(all_of(cols_needed)),
+    #this first calculates a total population (total_pop)
+    #for all of the columns designated, it then divides each value by 100 to get the percentage in decimal format, and multiplies it by the population to get the number of affected people
+    #and then sums the number of people for each county to get the total number for the state
+    summarise(total_pop = sum({{pop_column}}), across(c(all_of(cols_needed)), 
                                                       ~ sum((.x/100)*{{pop_column}}))) %>%
-    #divide by sum of population across state to get percentage
+    #finally take the total number of people affected in the state in cols_needed (calculated in previous lines, indicated as .x) and divides it by the total_pop
+    #this gives the decimal format, multiply by 100 to get back to percentage format. Do this for all columns
     summarise(across(c(cols_needed),
                      ~(.x/total_pop))*100)
+  #syntax:
+  #the double curly brackets indicate that pop_column is a variable not the name of the column
+  #the tilde connects the assigned columns and the command and the .x is all of the cells in each cols_needed
 }
 
-#Makes df for chr data to be used in percentage bar charts. Can take both county and state.Year is desired year to calc/visualize.
+#Makes df for CHR data to be used in bar charts with percentages. Can take both county and state df inputs. Year is desired year to calc/visualize.
 chr_perc_bar <- function(df, col_names, year){
   df <- df[c("Year",col_names)] %>%
     filter(Year==year)
-  df <- df[,2:ncol(df)] #remove the first column because it now has the year which we don't need
+  df <- df[,2:ncol(df)] #remove the first column because it now has the year isn't needed
   df
 }
 
-#Function to extract the number of people from percentages
-#Used only for 2020 and county-specific dfs
+#Function to extract the number of people affected from percentages to include as text in bar charts
 pop_num_func <- function(df, pop){
   pop_num <- df %>%
     filter(YEAR == "2020") %>%
@@ -139,7 +125,7 @@ pop_num_func <- function(df, pop){
   return(pop_num)
 }
 
-#Function to make a df for the county for 2020
+#Function to make a df for the county with desired variables from AHRQ dataset
 county_perc_df <- function(col_names){
   df <- ahrq_county[c("YEAR",col_names)] %>%
     filter(YEAR==2020)
@@ -165,6 +151,7 @@ quality_transform_combo <- function(df1,df2,desired_column_names,category_name){
   combo_df <- melt(combo_df, id=c(category_name))
 }
 
+#Function to make a df for the county across years (2016-2020) for percentage data (AHRQ)
 county_perc_acrossyears <- function(cols_needed){
   df <- ahrq_county %>%
     select(YEAR,cols_needed)
@@ -172,7 +159,8 @@ county_perc_acrossyears <- function(cols_needed){
   return(df)
 }
 
-#Function to make a df for the state across years (2016-2020). Have only used for PERCs so far
+#Function to make a df for the state across years (2016-2020) for percentage data (AHRQ)
+#Same logic as state_perc_totals, but group by year to do this for each year, instead of filtering by one year
 state_perc_acrossyears <- function(cols_needed, pop_column){
   df <- ahrq_sdoh_full %>%
     group_by(YEAR) %>%
@@ -205,6 +193,7 @@ quality_transform_combo_acrossyears <- function(df1,df2){
   combo_df
 }
 
+#Function to make a df for the county across years (2016-2020) for non-percentage data (AHRQ)
 county_val_acrossyears <- function(cols_needed){
   df <- ahrq_county %>%
     select(YEAR,cols_needed)
@@ -212,6 +201,7 @@ county_val_acrossyears <- function(cols_needed){
   return(df)
 }
 
+#Function to make a df for the state across years (2016-2020) for non-percentage data (AHRQ)
 state_val_acrossyears <- function(cols_needed, pop_column){
   df <- ahrq_sdoh_full %>%
     group_by(YEAR) %>%
@@ -233,10 +223,28 @@ oha_chronic_df <- function(county,risk_factors){
   df
 }
 
+#function to combine dfs on matching column names (it excludes any that are not included in both)
+#note: this is the only function that I didn't write
+rbind.match.columns <- function(input1, input2) {
+  n.input1 <- ncol(input1)
+  n.input2 <- ncol(input2)
+  
+  if (n.input2 < n.input1) {
+    TF.names <- which(names(input2) %in% names(input1))
+    column.names <- names(input2[, TF.names])
+  } else {
+    TF.names <- which(names(input1) %in% names(input2))
+    column.names <- names(input1[, TF.names])
+  }
+  
+  return(rbind(input1[, column.names], input2[, column.names]))
+  
+}
+
 ######GRAPHING FUNCTIONS#####
 
 #GRAPH COMPONENTS
-#only used these in a few graphs, but keeping
+#Only used these in a few graphs, wasn't as convenient/effective as I'd hoped, still keeping
 g_line <- geom_line(size = 0.4, linetype = 1, color = line_color, alpha = 0.6)
 g_theme <- theme(axis.title.y = element_blank(),
                  axis.title.x = element_text(size = 14),
@@ -246,7 +254,7 @@ g_theme_combo <- g_theme + theme(legend.title = element_blank())
 g_scale_y_perc <- scale_y_continuous(labels = percent_format(scale = 1, accuracy = 0.1), #accuracy is how many decimals
                                      expand = expansion(mult=(c(0.02,0.15))))
 
-#function for to save each graph (find text options in "things for all graphs" section)
+#function to save each graph (find text options in "things for all graphs" section)
 ggsave_graph <- function(section, g_title, text){
   ggsave(paste(paste("graphs/",county,"/",section,"/",g_title, sep = ""),county,text),width = 15, height = 6)
 }
@@ -288,7 +296,7 @@ graph_combo_perc <- function(df, category_name, col_names, graph_title, graph_su
   ggsave_graph(section, g_title, combo_text_save)
 }
 
-#same as graph_county_perc except that it includes the number of people in the bar
+#Function to make a bar plot of multiple categories in percentage form for one entity (one county or full state) and includes the number of people affected in text format
 graph_county_perc_num_text <- function(df, category_name, col_names, graph_title, graph_subtitle, graph_caption, year, pop, section){
   df %>%
     ggplot(aes(x=!!category_name, y=Values)) + 
@@ -306,7 +314,8 @@ graph_county_perc_num_text <- function(df, category_name, col_names, graph_title
   ggsave_graph(section, g_title, county_num_text_save)
 }
 
-#VALUES BAR CHART - this is the one that has "no data available" and I love it
+#Function to make a bar plot of multiple categories in non-percentage form for one entity (one county or full state)
+#This one has the "no data available" text and I love it
 graph_county_val <- function(df, category_name,col_names,graph_title, graph_subtitle, graph_caption, accu, year, xaxis, section){
   df %>%
     ggplot(aes(x=!!category_name, y=Values)) + 
@@ -327,7 +336,7 @@ graph_county_val <- function(df, category_name,col_names,graph_title, graph_subt
   ggsave_graph(section, g_title, county_text_save)
 }
 
-#values bar chart for dollar values
+#Function to make a bar plot of multiple categories in dollar form for one entity (one county or full state)
 graph_county_val_dollar <- function(df, category_name, col_names, graph_title, graph_subtitle, graph_caption, xaxis, section){
   df %>%
     ggplot(aes(x=!!category_name, y=Values)) + 
@@ -346,8 +355,8 @@ graph_county_val_dollar <- function(df, category_name, col_names, graph_title, g
   ggsave_graph(section, g_title, county_text_save)
 }
 
-#Functions to make chronic conditions bar plot with multiple categories of the county only 
-#Includes total number of people affected which is cool
+#Function to make bar plot with multiple categories of the county only, for the OHA chronic conditions dataset specifically
+#Includes total number of people affected, which is cool
 graph_county_perc_oha_chronic <- function(df, graph_title, graph_caption, section){
   df %>%
     ggplot(aes(x=Disease.or.risk.factor, y=Percent.of.adults)) + 
@@ -389,7 +398,7 @@ graph_combo_perc_oha_chronic <- function(df, graph_title, graph_caption, section
 }
 
 #LINE CHARTS
-#function to make line graphs over time for a single variable for percentages
+#Function to make line graph over time for the county, single variable in percentage format
 graph_county_perc_acrossyears <- function(df,graph_title, graph_subtitle, graph_caption, years, yaxis, section){
   df %>%
     ggplot(aes(x=Year, y=value)) +
@@ -416,7 +425,7 @@ graph_county_perc_acrossyears <- function(df,graph_title, graph_subtitle, graph_
   ggsave_graph(section, g_title, county_text_save)
 }
 
-#function to make line graphs over time for county and state for percentages
+#Function to make line graph over time for the county and state, single variable in percentage format
 graph_combo_perc_acrossyears <- function(df,graph_title, graph_subtitle, graph_caption, years, yaxis, section){
   df %>%
     ggplot(aes(x=Year, y=value, fill = variable)) +
@@ -446,7 +455,7 @@ graph_combo_perc_acrossyears <- function(df,graph_title, graph_subtitle, graph_c
 }
 
 
-#values across years
+#Function to make line graph over time for the county, single variable in non-percentage format
 graph_county_val_acrossyears <- function(df,graph_title, graph_subtitle, graph_caption, accu, years, yaxis, section){
   df %>%
     ggplot(aes(x=Year, y=value)) +
@@ -475,6 +484,7 @@ graph_county_val_acrossyears <- function(df,graph_title, graph_subtitle, graph_c
   ggsave_graph(section, g_title, county_text_save)
 }
 
+#Function to make line graph over time for the county, single variable in dollar format
 graph_county_val_acrossyears_dollar <- function(df,graph_title, graph_subtitle, graph_caption, yaxis, section){
   df %>%
     ggplot(aes(x=Year, y=value)) +
@@ -502,7 +512,8 @@ graph_county_val_acrossyears_dollar <- function(df,graph_title, graph_subtitle, 
   ggsave_graph(section, g_title, county_text_save)
 }
 
-#only using for chr currently
+##Function to make line graph over time for the county and state, single variable in non-percentage format
+#Only using for CHR data currently
 graph_combo_val_acrossyears <- function(df,graph_title, graph_subtitle, graph_caption, accu, years, yaxis, section){
   df %>%
     ggplot(aes(x=Year, y=value, fill = variable)) +
@@ -532,7 +543,28 @@ graph_combo_val_acrossyears <- function(df,graph_title, graph_subtitle, graph_ca
   ggsave_graph(section, g_title, combo_text_save)
 }
 
+#Graphing function notes / syntax reminders
+#scale_x_continuous(breaks = seq(df$Year[1],df$Year[length(df$Year)],1), #this sets the x axis markers to include every year. Looks complex, but is just setting breaks to first and last year with an interval of 1
+#                                      expand = expansion(mult=c(0.05,0.05))) #this formats the extra space on either side of the x axis (left, right)
 
+# geom_point(shape=21,
+#            size=4) + #size controls the inside size, stroke (not used here) controls the border
+
+# scale_y_continuous(labels = percent_format(scale = 1, accuracy = 0.1), #accuracy is how many decimals
+
+# scale_y_continuous(labels = percent_format(scale = 1),expand = expansion(mult=(c(0.02,0.1)))) + #this formats the axis as %s (percent_format) and adjusts the space at the beginning and end of the plot (first number is left, second is right)
+  
+
+# geom_label(aes(label=percent(value/100,accuracy = 0.01)),
+#            vjust = -0.5, 
+#            color = "black",
+#            fontface = "bold",
+#            cex = 5)+ #cex ajusts label size but scales oddly
+                   
+          
+#xlim(col_names)+ #this is what sets the factor order (and thus the order the bars show up in) for the bar chart         
+
+#geom_text(aes(label = paste(comma(Values*0.01*pop),"people"), y = 0.2), #the y controls where the text is in the bar, smaller number -> left, bigger number -> right
 
 #####DATA PROCESSING#####
 #Combining the AHRQ Oregon data into one DF and subsetting for Oregon
@@ -543,6 +575,7 @@ ahrq_sdoh_full <- rbind.match.columns(ahrq_sdoh_full,ahrq_sdoh_2016)
 ahrq_sdoh_full <- subset(ahrq_sdoh_full, STATE == "Oregon")
 
 #Apply the CHR clean function to all years of the CHR data
+#Also apply the change names function for years 2016-2019 due to changed naming conventions
 chr_2016 <- CHR_clean(chr_2016, "2016")
 chr_2016 <- CHR_change_names(chr_2016)
 
@@ -555,7 +588,7 @@ chr_2018 <- CHR_change_names(chr_2018)
 chr_2019 <- CHR_clean(chr_2019, "2019")
 chr_2019 <- CHR_change_names(chr_2019)
 
-#don't need to change names for these ones since they were aligned with these
+#Don't need to change names for these ones
 chr_2020 <- CHR_clean(chr_2020, "2020")
 chr_2021 <- CHR_clean(chr_2021, "2021")
 chr_2022 <- CHR_clean(chr_2022, "2022")
@@ -578,8 +611,7 @@ oha_chronic <- oha_chronic %>%
          Percent.of.adults = as.numeric(Percent.of.adults))
 
 
-
-####THINGS NEEDED FOR MANY GRAPHS#####
+####THINGS NEEDED FOR MANY GRAPHS AND FUNCTIONS#####
 county_color <- "#332288" #purple
 oregon_color <- "#999933" #olive
 line_color <- "#5A5A5A" #dark grey
@@ -611,8 +643,8 @@ county_num_text_save <- "County w num.pdf"
 combo_text_save <- "County and Oregon.pdf"
 
 
-
 ########DESIGNATE THE COUNTY OF INTEREST - CHANGE HERE & RUN#######
+#NOTE: Only Oregon counties work right now. Input the county name only (e.g., "Curry" not "Curry County")
 county <- "Curry"
 
 #creates the corresponding dfs for the county - RUN THESE AFTER COUNTY CHANGE
@@ -629,4 +661,3 @@ chr_county <- chr_full %>%
 chr_oregon <- chr_full %>%
   filter(County == "Oregon") %>%
   arrange(Year)
-
