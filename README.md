@@ -1,5 +1,5 @@
 # Community Health Assessment
-This code produces graphs for Oregon's Community Health Assessments (CHAs) from publicly available data. CHAs include information about a county's health status and needs which inform improvement plans. The purpose of this code is to standardize and automate graph production and to streamline making changes across all graphs. While there are past CHAs, there is no standard CHA format, so everything from identifying the data sources, to designing visualizations, to writing it in R instead of Excel was part of my role on this project.
+This code produces graphs for Oregon's Community Health Assessments (CHAs) from publicly available data. CHAs include information about a county's health status and needs which inform improvement plans. The purpose of this code is to standardize and automate graph production and to streamline making changes across multiple graphs. While there are past CHAs, there is no standard CHA format, so everything from identifying the data sources, to designing visualizations, to writing it in R instead of Excel was part of my role on this project.
 
 # What is included
 All code is written in R. This is a sample of the code I wrote for this project, but it still displays most of the techniques and styles that I used. 
