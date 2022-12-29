@@ -3,8 +3,8 @@ This code produces graphs for Oregon's Community Health Assessments (CHAs) from 
 
 # What is included
 All code is written in R. This is a sample of the code I wrote for this project, but it still displays most of the techniques and styles that I used. 
-- The **data_cleaning** script contains all the libraries, data import, cleaning, functions, and pre-set variables for the rest of the code. This should be run first before any of the graphing scripts.
-- The **perc_line_graphs** script produces all the line graphs, which show change in a variable over time, for data with percentage values. The script includes additional information about how to use it. This is one of multiple graphing scripts, as I have separate scripts for other graph and data types as each requires slightly different processing, and this was the most intuitive way for me to organize it.
+- The **data_cleaning** code contains all the libraries, data import, cleaning, functions, and pre-set variables for the rest of the code. This should be run first before any of the graphing scripts.
+- The **perc_line_graphs** code produces all the line graphs, which show change in a variable over time, for data with percentage values. The script includes additional information about how to use it. This is one of multiple graphing scripts, as I have separate scripts for other graph and data types as each requires slightly different processing, and this was the most intuitive way for me to organize it.
 - The **data_files** folder has the data needed to run this code.
 - The **sample graphics** folder includes a small sample of the graphs and figures produced for this project.
 
