@@ -2,7 +2,7 @@
 
 # Run all of Data_cleaning first
 # Next run the block of interest under either AHRQ or CHR data
-# Scroll to the bottom of the page and run the data processing and graphing functions for the indicated data source
+# Then, scroll to the bottom of the page and run all data processing and graphing functions for the indicated data source
 # Graphs auto-save, to view them directly in R comment out the ggsave line at the bottom of the graphing function located in Data_cleaning
 
 ##---------AHRQ DATA------------------#
