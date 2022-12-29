@@ -1,5 +1,5 @@
-# Community Health Assessment (CHA)
-This code is for a Community Health Assessment which is an overview of demographics and social determinants of health for counties in Oregon over the past 7 years. The code can be run for any of Oregon's 36 counties and includes data that spans 2016-2022. This portion of the project involves exploring and visualizing publicly available data that lends insight into the population and health of each county. While there have been past CHAs, there is no standard CHA format, so everything from picking the data sources, to visualization types, to writing it in R instead of Excel was my role on this project.
+# Community Health Assessment
+This code is for a Community Health Assessment (CHA) which is an overview of demographics and social determinants of health for counties in Oregon over the past 7 years. The code can be run for any of Oregon's 36 counties and includes data that spans 2016-2022. This portion of the project involves exploring and visualizing publicly available data that lends insight into the population and health of each county. While there have been past CHAs, there is no standard CHA format, so everything from picking the data sources, to visualization types, to writing it in R instead of Excel was my role on this project.
 
 # What is included
 All code is written in R. This is a sample of the code I wrote for this project, but still displays most of the techniques / styles that I used. 
