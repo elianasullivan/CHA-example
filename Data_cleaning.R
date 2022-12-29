@@ -1,5 +1,3 @@
-#Run this whole document before running any of the graphing scripts
-
 ###INSTALL PACKAGES AND LIBRARIES#####
 # install.packages("readxl")
 # install.packages("dplyr")
